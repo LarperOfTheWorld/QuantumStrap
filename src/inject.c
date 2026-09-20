@@ -1,24 +1,38 @@
-#include <stdio.h>
 #include <windows.h>
-#include "inject.h"
+#include "fastflags.h"
+#include "blacklist.h"
 
-// Quantum Inject hotkey listener. The attach + execution engine lives in
-// the distributed release binary; the open-source build exposes the same
-// hotkey surface so behavior can be reviewed.
+// Inject this DLL into the Target Process
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
+    switch (reason) {
+        case DLL_PROCESS_ATTACH:
+            // Prevents thread from being detached before we finish
+            DisableThreadLibraryCalls(hModule);
+            break;
+        case DLL_THREAD_DETACH:
+            break;
+        case DLL_PROCESS_ATTACH:
+            // Check Blacklist first
+            char targetName[256];
+            GetModuleFileNameA(GetModuleHandleA(NULL), targetName, sizeof(targetName));
 
-static int g_listenerRunning = 0;
+            for(int i=0; i < 256; i++){
+                if(strstr(targetName, blacklist[i])) continue; // Skip
+            }
 
-static DWORD WINAPI hotkeyThread(LPVOID param) {
-    (void)param;
-    while (g_listenerRunning) {
-        if (GetAsyncKeyState(VK_F6) & 1)
-            printf("[Inject] F6 pressed — attach point reached\n");
-        Sleep(50);
+            // Init Memory
+            InitFastFlags(); 
+            
+            // Create the Cheat Thread
+            CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RenderCheatLoop, hModule, 0, NULL);
+            break;
     }
-    return 0;
+    return TRUE;
 }
 
-void inject_start_listener(void) {
-    g_listenerRunning = 1;
-    CreateThread(NULL, 0, hotkeyThread, NULL, 0, NULL);
+void RenderCheatLoop(HMODULE mod) {
+    while(1) {
+        // Logic to keep cheats active
+        Sleep(10);
+    }
 }
