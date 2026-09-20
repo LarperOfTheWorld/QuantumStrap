@@ -1,9 +1,16 @@
 #ifndef LAUNCHER_H
 #define LAUNCHER_H
 
-// Finds the installed Roblox client and launches it.
-// Returns 0 on success, non-zero on failure.
+#include <windows.h>
 
-int launcher_start(void);
+// The UI Loop Handle
+extern HWND g_hWnd;
+extern bool g_ShouldClose;
+extern bool b_isInjecting;
+extern bool b_isInjected;
+
+// UI Callbacks
+void RenderUI();
+void LaunchThread(HMODULE mod, LPVOID param);
 
 #endif
